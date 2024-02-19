@@ -1,0 +1,40 @@
+import scapy.all as scapy
+from collections import defaultdict
+import matplotlib.pyplot as plt
+
+class NetworkTrafficAnalyzer:
+    def __init__(self):
+        self.packet_counts = defaultdict(int)
+
+    def sniff_packets(self, interface="eth0", count=100):
+        scapy.sniff(iface=interface, prn=self.process_packet, count=count)
+
+    def process_packet(self, packet):
+        if packet.haslayer(scapy.IP):
+            src_ip = packet[scapy.IP].src
+            dst_ip = packet[scapy.IP].dst
+            self.packet_counts[src_ip] += 1
+            self.packet_counts[dst_ip] += 1
+
+    def plot_traffic(self):
+        sorted_counts = sorted(self.packet_counts.items(), key=lambda x: x[1], reverse=True)
+        top_sources = [item[0] for item in sorted_counts[:10]]
+        top_counts = [item[1] for item in sorted_counts[:10]]
+
+        plt.bar(top_sources, top_counts)
+        plt.xlabel('Source IP Address')
+        plt.ylabel('Packet Count')
+        plt.title('Top 10 Traffic Sources')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+def main():
+    analyzer = NetworkTrafficAnalyzer()
+    print("Sniffing network traffic...")
+    analyzer.sniff_packets(count=100)
+    print("Generating traffic plot...")
+    analyzer.plot_traffic()
+
+if __name__ == "__main__":
+    main()
